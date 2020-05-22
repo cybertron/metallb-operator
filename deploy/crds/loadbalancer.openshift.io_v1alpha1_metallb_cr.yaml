@@ -1,0 +1,7 @@
+apiVersion: loadbalancer.openshift.io/v1alpha1
+kind: MetalLB
+metadata:
+  name: example-metallb
+spec:
+  # Add fields here
+  size: 3
