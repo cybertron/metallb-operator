@@ -2,13 +2,13 @@ package metallb
 
 import (
 	"context"
+	"path/filepath"
 
 	loadbalancerv1alpha1 "github.com/openshift/metallb-operator/pkg/apis/loadbalancer/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	uns "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -17,14 +17,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/openshift/cluster-network-operator/pkg/apply"
+	"github.com/openshift/cluster-network-operator/pkg/render"
+	"github.com/pkg/errors"
 )
 
 var log = logf.Log.WithName("controller_metallb")
-
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
 
 // Add creates a new MetalLB Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -90,7 +89,7 @@ func (r *ReconcileMetalLB) Reconcile(request reconcile.Request) (reconcile.Resul
 	instance := &loadbalancerv1alpha1.MetalLB{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -100,54 +99,54 @@ func (r *ReconcileMetalLB) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Pod object
-	pod := newPodForCR(instance)
-
-	// Set MetalLB instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
+	// Create namespace
+	err = r.applyNamespace(instance)
+	if err != nil {
+		errors.Wrap(err, "Failed to apply namespace")
 		return reconcile.Result{}, err
 	}
 
-	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		// Pod created successfully - don't requeue
-		return reconcile.Result{}, nil
-	} else if err != nil {
-		return reconcile.Result{}, err
-	}
+	// Iterate decomposed metallb manifest
 
 	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
+	reqLogger.Info("Skip reconcile: Already deployed")
 	return reconcile.Result{}, nil
 }
 
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *loadbalancerv1alpha1.MetalLB) *corev1.Pod {
-	labels := map[string]string{
-		"app": cr.Name,
+// applyNamespace creates the metallb-system namespace
+func (r *ReconcileMetalLB) applyNamespace(instance *loadbalancerv1alpha1.MetalLB) error {
+	data := render.MakeRenderData()
+	return r.renderAndApply(instance, data, "namespace", true)
+}
+
+func (r *ReconcileMetalLB) renderAndApply(instance *loadbalancerv1alpha1.MetalLB, data render.RenderData, sourceDirectory string, setControllerReference bool) error {
+	var err error
+	objs := []*uns.Unstructured{}
+
+	objs, err = render.RenderDir(filepath.Join("/manifests", sourceDirectory), &data)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to render metallb %s", sourceDirectory)
 	}
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
-			Namespace: cr.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
-				},
-			},
-		},
+
+	for _, obj := range objs {
+		// RenderDir seems to add an extra null entry to the list. It appears to be because of the
+		// nested templates. This just makes sure we don't try to apply an empty obj.
+		if obj.GetName() == "" {
+			continue
+		}
+		if setControllerReference {
+			// Set the controller refernce. When the CR is removed, it will remove the CRDs as well
+			err = controllerutil.SetControllerReference(instance, obj, r.scheme)
+			if err != nil {
+				return errors.Wrap(err, "Failed to set owner reference")
+			}
+		}
+
+		// Now apply the object
+		err = apply.ApplyObject(context.TODO(), r.client, obj)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to apply object %v", obj)
+		}
 	}
+	return nil
 }
