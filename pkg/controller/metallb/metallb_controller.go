@@ -116,7 +116,7 @@ func (r *ReconcileMetalLB) Reconcile(request reconcile.Request) (reconcile.Resul
 // applyNamespace creates the metallb-system namespace
 func (r *ReconcileMetalLB) applyNamespace(instance *loadbalancerv1alpha1.MetalLB) error {
 	data := render.MakeRenderData()
-	return r.renderAndApply(instance, data, "namespace", true)
+	return r.renderAndApply(instance, data, "namespace", false)
 }
 
 func (r *ReconcileMetalLB) renderAndApply(instance *loadbalancerv1alpha1.MetalLB, data render.RenderData, sourceDirectory string, setControllerReference bool) error {
