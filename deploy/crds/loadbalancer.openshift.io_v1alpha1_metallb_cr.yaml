@@ -4,4 +4,5 @@ metadata:
   name: example-metallb
 spec:
   # Add fields here
-  size: 3
+  protocol: layer2
+  viprange: 1.1.1.1-1.1.1.11
