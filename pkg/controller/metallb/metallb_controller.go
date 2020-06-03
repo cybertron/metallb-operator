@@ -106,10 +106,16 @@ func (r *ReconcileMetalLB) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	// Iterate decomposed metallb manifest
+	// Deploy metallb manifest
+	err = r.applyMetalLB(instance)
+	if err != nil {
+		errors.Wrap(err, "Failed to apply metallb")
+		return reconcile.Result{}, err
+	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Already deployed")
+	// TODO: Create config map
+
+	reqLogger.Info("Reconcile complete")
 	return reconcile.Result{}, nil
 }
 
@@ -117,6 +123,12 @@ func (r *ReconcileMetalLB) Reconcile(request reconcile.Request) (reconcile.Resul
 func (r *ReconcileMetalLB) applyNamespace(instance *loadbalancerv1alpha1.MetalLB) error {
 	data := render.MakeRenderData()
 	return r.renderAndApply(instance, data, "namespace", false)
+}
+
+// applyMetalLB creates the metallb-system namespace
+func (r *ReconcileMetalLB) applyMetalLB(instance *loadbalancerv1alpha1.MetalLB) error {
+	data := render.MakeRenderData()
+	return r.renderAndApply(instance, data, "metallb", false)
 }
 
 func (r *ReconcileMetalLB) renderAndApply(instance *loadbalancerv1alpha1.MetalLB, data render.RenderData, sourceDirectory string, setControllerReference bool) error {

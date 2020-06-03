@@ -95,7 +95,7 @@ metadata:
   name: speaker
   namespace: metallb-system
 ---
-apiVersion: v1
+apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
   name: metallb-speaker

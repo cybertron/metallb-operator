@@ -8,9 +8,7 @@ ENV OPERATOR=/usr/local/bin/metallb-operator \
 COPY build/_output/bin/metallb-operator ${OPERATOR}
 # install metallb manifests
 COPY manifests/namespace.yaml /manifests/namespace/
-COPY manifests/metallb.yaml /manifests/
-RUN mkdir /manifests/metallb
-RUN csplit /manifests/metallb.yaml /---/ '{*}' --prefix='/manifests/metallb/metallb-' --suffix-format='%03d.yaml'
+COPY manifests/metallb.yaml /manifests/metallb/
 
 COPY build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup
