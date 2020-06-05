@@ -12,6 +12,7 @@ type MetalLBSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+
 	// A range of VIPs that metallb can use for loadbalancing. Can be either a
 	// full CIDR or a range like 1.1.1.1-1.1.1.10.
 	// TODO(bnemec): Needs to be a list

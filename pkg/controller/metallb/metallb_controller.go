@@ -113,7 +113,12 @@ func (r *ReconcileMetalLB) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	// TODO: Create config map
+	// Create config map based on CR
+	err = r.applyConfigMap(instance)
+	if err != nil {
+		errors.Wrap(err, "Failed to create config map")
+		return reconcile.Result{}, err
+	}
 
 	reqLogger.Info("Reconcile complete")
 	return reconcile.Result{}, nil
@@ -125,10 +130,18 @@ func (r *ReconcileMetalLB) applyNamespace(instance *loadbalancerv1alpha1.MetalLB
 	return r.renderAndApply(instance, data, "namespace", false)
 }
 
-// applyMetalLB creates the metallb-system namespace
+// applyMetalLB creates the metallb resources
 func (r *ReconcileMetalLB) applyMetalLB(instance *loadbalancerv1alpha1.MetalLB) error {
 	data := render.MakeRenderData()
 	return r.renderAndApply(instance, data, "metallb", false)
+}
+
+// applyConfigMap creates the metallb configmap
+func (r *ReconcileMetalLB) applyConfigMap(instance *loadbalancerv1alpha1.MetalLB) error {
+	data := render.MakeRenderData()
+	data.Data["Protocol"] = instance.Spec.Protocol
+	data.Data["VIPRange"] = instance.Spec.VIPRange
+	return r.renderAndApply(instance, data, "config", false)
 }
 
 func (r *ReconcileMetalLB) renderAndApply(instance *loadbalancerv1alpha1.MetalLB, data render.RenderData, sourceDirectory string, setControllerReference bool) error {
