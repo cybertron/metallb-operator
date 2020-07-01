@@ -10,6 +10,7 @@ COPY build/_output/bin/metallb-operator ${OPERATOR}
 COPY manifests/namespace.yaml /manifests/namespace/
 COPY manifests/metallb.yaml /manifests/metallb/
 COPY manifests/config.yaml /manifests/config/
+COPY manifests/secret.yaml /manifests/secret/
 
 COPY build/bin /usr/local/bin
 RUN  /usr/local/bin/user_setup

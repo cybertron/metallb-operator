@@ -2,6 +2,8 @@ package metallb
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"path/filepath"
 
 	loadbalancerv1alpha1 "github.com/openshift/metallb-operator/pkg/apis/loadbalancer/v1alpha1"
@@ -113,6 +115,13 @@ func (r *ReconcileMetalLB) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
+	// Create secret
+	err = r.applySecret(instance)
+	if err != nil {
+		errors.Wrap(err, "Failed to create secret")
+		return reconcile.Result{}, err
+	}
+
 	// Create config map based on CR
 	err = r.applyConfigMap(instance)
 	if err != nil {
@@ -134,6 +143,19 @@ func (r *ReconcileMetalLB) applyNamespace(instance *loadbalancerv1alpha1.MetalLB
 func (r *ReconcileMetalLB) applyMetalLB(instance *loadbalancerv1alpha1.MetalLB) error {
 	data := render.MakeRenderData()
 	return r.renderAndApply(instance, data, "metallb", false)
+}
+
+// applySecret creates the metallb memberlist secret
+func (r *ReconcileMetalLB) applySecret(instance *loadbalancerv1alpha1.MetalLB) error {
+	data := render.MakeRenderData()
+	b := make([]byte, 128)
+	_, err := rand.Read(b)
+	if err != nil {
+		return err
+	}
+	secretKey := base64.StdEncoding.EncodeToString(b)
+	data.Data["SecretKey"] = secretKey
+	return r.renderAndApply(instance, data, "secret", false)
 }
 
 // applyConfigMap creates the metallb configmap
