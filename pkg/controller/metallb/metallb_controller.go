@@ -153,6 +153,12 @@ func (r *ReconcileMetalLB) applySecret(instance *loadbalancerv1alpha1.MetalLB) e
 	if err != nil {
 		return err
 	}
+	for i, v := range b {
+		// 0 bytes in the secret cause errors
+		if v == 0 {
+			b[i] = 1
+		}
+	}
 	secretKey := base64.StdEncoding.EncodeToString(b)
 	data.Data["SecretKey"] = secretKey
 	return r.renderAndApply(instance, data, "secret", false)
