@@ -7,19 +7,44 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type BGPPeer struct {
+	// Peer address
+	Address string `json:"peer-address"`
+
+	// Peer ASN
+	PeerASN string `json:"peer-asn"`
+
+	// My ASN
+	ASN     string `json:"my-asn"`
+}
+
+type AddressPool struct {
+	// Name of the pool
+	Name string `json:"name"`
+
+	// The protocol to use for advertising VIPs. Either layer2 or bgp.
+	Protocol string `json:"protocol"`
+
+	// A range of VIPs that metallb can use for loadbalancing. Can be either a
+	// full CIDR or a range like 1.1.1.1-1.1.1.10.
+	Addresses []string `json:"addresses"`
+
+	// TODO(bnemec): bgp-advertisements
+}
+
 // MetalLBSpec defines the desired state of MetalLB
 type MetalLBSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// A range of VIPs that metallb can use for loadbalancing. Can be either a
-	// full CIDR or a range like 1.1.1.1-1.1.1.10.
-	// TODO(bnemec): Needs to be a list
-	VIPRange string `json:"viprange"`
+	// Address pools
+	AddressPools []AddressPool `json:"address-pools"`
 
-	// The protocol to use for advertising VIPs. Either layer2 or bgp.
-	Protocol string `json:"protocol"`
+	// Peers for BGP mode
+	Peers []BGPPeer `json:"peers,omitempty"`
+
+	// TODO(bnemec): bgp-communities
 }
 
 // MetalLBStatus defines the observed state of MetalLB

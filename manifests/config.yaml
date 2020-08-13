@@ -6,7 +6,17 @@ metadata:
 data:
   config: |
     address-pools:
-    - name: my-ip-space
-      protocol: {{ .Protocol }}
+    {{ range $i, $entry := .AddressPools -}}
+    - name: {{ $entry.Name }}
+      protocol: {{ $entry.Protocol }}
       addresses:
-      - {{ .VIPRange }}
+      {{ range $a := $entry.Addresses -}}
+      - {{ $a }}
+      {{ end }}
+    {{ end }}
+    peers:
+    {{ range $i, $entry := .Peers }}
+    - peer-address: {{ $entry.Address }}
+      peer-asn: {{ $entry.PeerASN }}
+      my-asn: {{ $entry.ASN }}
+    {{ end }}

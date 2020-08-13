@@ -31,18 +31,50 @@ spec:
         spec:
           description: MetalLBSpec defines the desired state of MetalLB
           properties:
-            protocol:
-              description: The protocol to use for advertising VIPs. Either layer2
-                or bgp.
-              type: string
-            viprange:
-              description: 'A range of VIPs that metallb can use for loadbalancing.
-                Can be either a full CIDR or a range like 1.1.1.1-1.1.1.10. TODO(bnemec):
-                Needs to be a list'
-              type: string
+            address-pools:
+              description: Address pools
+              items:
+                properties:
+                  addresses:
+                    description: A range of VIPs that metallb can use for loadbalancing.
+                      Can be either a full CIDR or a range like 1.1.1.1-1.1.1.10.
+                    items:
+                      type: string
+                    type: array
+                  name:
+                    description: Name of the pool
+                    type: string
+                  protocol:
+                    description: The protocol to use for advertising VIPs. Either
+                      layer2 or bgp.
+                    type: string
+                required:
+                - addresses
+                - name
+                - protocol
+                type: object
+              type: array
+            peers:
+              description: Peers for BGP mode
+              items:
+                properties:
+                  my-asn:
+                    description: My ASN
+                    type: string
+                  peer-address:
+                    description: Peer address
+                    type: string
+                  peer-asn:
+                    description: Peer ASN
+                    type: string
+                required:
+                - my-asn
+                - peer-address
+                - peer-asn
+                type: object
+              type: array
           required:
-          - protocol
-          - viprange
+          - address-pools
           type: object
         status:
           description: MetalLBStatus defines the observed state of MetalLB

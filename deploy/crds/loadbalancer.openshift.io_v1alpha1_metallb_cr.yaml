@@ -3,6 +3,8 @@ kind: MetalLB
 metadata:
   name: example-metallb
 spec:
-  # Add fields here
-  protocol: layer2
-  viprange: 1.1.1.1-1.1.1.11
+  address-pools:
+  - name: default
+    protocol: layer2
+    addresses:
+    - 1.1.1.1-1.1.1.11

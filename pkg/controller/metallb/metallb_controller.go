@@ -167,8 +167,8 @@ func (r *ReconcileMetalLB) applySecret(instance *loadbalancerv1alpha1.MetalLB) e
 // applyConfigMap creates the metallb configmap
 func (r *ReconcileMetalLB) applyConfigMap(instance *loadbalancerv1alpha1.MetalLB) error {
 	data := render.MakeRenderData()
-	data.Data["Protocol"] = instance.Spec.Protocol
-	data.Data["VIPRange"] = instance.Spec.VIPRange
+	data.Data["AddressPools"] = instance.Spec.AddressPools
+	data.Data["Peers"] = instance.Spec.Peers
 	return r.renderAndApply(instance, data, "config", false)
 }
 
