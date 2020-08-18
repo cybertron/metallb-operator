@@ -12,10 +12,10 @@ data:
       addresses:
       {{ range $a := $entry.Addresses -}}
       - {{ $a }}
-      {{ end }}
-    {{ end }}
+      {{ end -}}
+    {{ end -}}
     peers:
-    {{ range $i, $entry := .Peers }}
+    {{ range $i, $entry := .Peers -}}
     - peer-address: {{ $entry.Address }}
       peer-asn: {{ $entry.PeerASN }}
       my-asn: {{ $entry.ASN }}

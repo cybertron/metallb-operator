@@ -60,13 +60,13 @@ spec:
                 properties:
                   my-asn:
                     description: My ASN
-                    type: string
+                    type: integer
                   peer-address:
                     description: Peer address
                     type: string
                   peer-asn:
                     description: Peer ASN
-                    type: string
+                    type: integer
                 required:
                 - my-asn
                 - peer-address

@@ -12,10 +12,10 @@ type BGPPeer struct {
 	Address string `json:"peer-address"`
 
 	// Peer ASN
-	PeerASN string `json:"peer-asn"`
+	PeerASN uint `json:"peer-asn"`
 
 	// My ASN
-	ASN     string `json:"my-asn"`
+	ASN     uint `json:"my-asn"`
 }
 
 type AddressPool struct {
