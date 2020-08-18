@@ -12,7 +12,7 @@ data:
       addresses:
       {{ range $a := $entry.Addresses -}}
       - {{ $a }}
-      {{ end -}}
+    {{ end -}}
     {{ end -}}
     peers:
     {{ range $i, $entry := .Peers -}}
